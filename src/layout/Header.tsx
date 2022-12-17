@@ -142,7 +142,7 @@ export const Header: FC<{ league?: League }> = ({ league }) => {
                 />
                 <DesktopNavItem
                   href={`/${league}/matches`}
-                  isActive={router.asPath.includes(`/${league}`)}
+                  isActive={router.asPath.includes(`/${league}/matches`)}
                   icon={faCalendarDay}
                   text="Matches"
                 />
