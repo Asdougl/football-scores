@@ -2,7 +2,7 @@ import { z } from 'zod'
 
 export const StandingTeam = z.object({
   IdTeam: z.string(),
-  IdConfederation: z.string(),
+  IdConfederation: z.string().nullable(),
   IdCountry: z.string(),
   ShortClubName: z.string(),
   Abbreviation: z.string(),

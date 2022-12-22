@@ -10,7 +10,7 @@ interface ClubCrestProps {
   imgUrl?: string
   alt?: string
   international?: boolean
-  size?: 'sm' | 'md' | 'lg'
+  size?: 'xs' | 'sm' | 'md' | 'lg'
 }
 
 const getImgSize = (
@@ -19,6 +19,8 @@ const getImgSize = (
 ): [x: number, y: number] => {
   if (!international) {
     switch (size) {
+      case 'xs':
+        return [16, 16]
       case 'sm':
         return [32, 32]
       case 'md':
@@ -28,6 +30,8 @@ const getImgSize = (
     }
   } else {
     switch (size) {
+      case 'xs':
+        return [16, 12]
       case 'sm':
         return [32, 21]
       case 'md':

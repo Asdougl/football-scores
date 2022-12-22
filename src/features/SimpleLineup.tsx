@@ -1,5 +1,6 @@
+import { faC, faCircle } from '@fortawesome/pro-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import type { FC } from 'react'
-import { PlayerImage } from '../components/PlayerImage'
 import type { LiveMatch, LiveMatchTeamPlayer } from '../types/liveMatch'
 
 const Player = ({
@@ -15,18 +16,27 @@ const Player = ({
       home ? 'flex-row' : 'flex-row-reverse'
     }`}
   >
-    <div className="relative flex w-8 items-center justify-center">
-      <PlayerImage player={player} />
-      {player.Captain && (
-        <div className="absolute bottom-0 right-0 flex h-3 w-3 items-center justify-center rounded-full bg-purple-500 px-1 text-[10px] text-white shadow-lg">
-          c
-        </div>
-      )}
-    </div>
+    <div className="relative flex w-8 items-center justify-center"></div>
     <div className="w-10 text-center">
       {player.ShirtNumber === 0 ? '-' : player.ShirtNumber}
     </div>
-    <div>{player.PlayerName[0]?.Description}</div>
+    <div
+      className={`flex items-center ${home ? 'flex-row' : 'flex-row-reverse'}`}
+    >
+      <span>{player.PlayerName[0]?.Description}</span>
+      {player.Captain && (
+        <div className="relative h-1 w-8 px-2">
+          <FontAwesomeIcon
+            icon={faCircle}
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-purple-500"
+          />
+          <FontAwesomeIcon
+            icon={faC}
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-xs text-white"
+          />
+        </div>
+      )}
+    </div>
   </li>
 )
 

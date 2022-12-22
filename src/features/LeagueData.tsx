@@ -16,7 +16,7 @@ interface LeagueDataProps {
 export const LeagueData = ({ league }: LeagueDataProps) => {
   const { data: matches, isLoading: matchesLoading } =
     trpc.matches.allMatches.useQuery({
-      league,
+      leagues: [league],
       from: dayjs().startOf('day').toDate(),
       to: dayjs().add(1, 'week').startOf('day').toDate(),
     })

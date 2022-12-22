@@ -11,10 +11,13 @@ export enum EventType {
   PENALTY = 6,
   START_OF_PERIOD = 7,
   END_OF_PERIOD = 8,
+  MATCH_PAUSED = 9,
+  MATCH_RESUMED = 10,
   SHOT = 12,
   FREE_KICK = 14,
   OFFSIDE = 15,
   CORNER = 16,
+  SHOT_BLOCKED = 17,
   FOUL = 18,
   COIN_TOSS = 19,
   UNKNOWN = 20,
@@ -23,11 +26,16 @@ export enum EventType {
   CLEARANCE = 25,
   FINAL_WHISTLE = 26,
   AERIAL_DUEL = 27,
+  SHOT_HIT_POST = 33,
   OWN_GOAL = 34,
+  SCORE_FROM_FREE_KICK = 39,
   CONVERTED_PENALTY = 41,
+  PENALTY_HITS_POST = 51,
+  GOAL_SAVED = 57,
   SAVED_PENALTY = 60,
+  MISSED_PENALTY = 65,
   VAR = 71,
-  SOMETHING = 129,
+  PENALTY_CONCEDED = 72,
 }
 
 export const isBooking = (type: EventType) =>
@@ -67,3 +75,8 @@ export const Timeline = z.object({
   IdGroup: z.string().nullable(),
   Event: TimelineEvent.array(),
 })
+
+export const isPenaltyShootout = (minute: string) => {
+  const asNum = parseInt(minute)
+  return asNum > 120 || (asNum === 120 && !minute.includes('+'))
+}

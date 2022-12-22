@@ -1,46 +1,88 @@
-import { faArrowLeft } from '@fortawesome/pro-regular-svg-icons'
+import {
+  faArrowLeft,
+  faHeart as farHeart,
+} from '@fortawesome/pro-regular-svg-icons'
+import {
+  faBell,
+  faBellOn,
+  faHeart as fasHeart,
+} from '@fortawesome/pro-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import formatDistanceStrict from 'date-fns/formatDistanceStrict'
 import dayjs from 'dayjs'
+import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/router'
 import { useState } from 'react'
 import { ClubCrest } from '../components/ClubCrest'
 import { Loader } from '../components/Loader'
 import { MatchPeriod } from '../types/liveMatch'
 import { MatchStatus } from '../types/match'
-import type { League } from '../utils/leagues'
+import { isInternational } from '../utils/leagues'
 import { trpc } from '../utils/trpc'
 import { SimpleLineUp } from './SimpleLineup'
 import { Summary } from './Summary'
 import { Timeline } from './Timeline'
 
 interface MatchDataProps {
-  league: League
   matchId: string
-  international?: boolean
 }
 
-export const MatchData = ({
-  league,
-  matchId,
-  international,
-}: MatchDataProps) => {
+export const MatchData = ({ matchId }: MatchDataProps) => {
   const [tab, setTab] = useState<'summary' | 'timeline' | 'lineup'>('summary')
 
   const router = useRouter()
+  const { data: session } = useSession()
+  const utils = trpc.useContext()
 
   const { data: match } = trpc.matches.oneMatch.useQuery(
     { matchId },
     { refetchInterval: 120000 }
   )
   const { data: fullMatch } = trpc.live.liveMatch.useQuery(
-    { league, matchId },
+    { matchId },
     { refetchInterval: 30000 }
   )
   const { data: timeline } = trpc.live.timeline.useQuery(
-    { league, matchId },
+    { matchId },
     { refetchInterval: 30000 }
   )
+
+  const { data: following, isLoading: loadingFollow } =
+    trpc.teamFollow.isFollowingTeams.useQuery({
+      matchId,
+    })
+
+  const { mutate: follow, isLoading: pendingFollow } =
+    trpc.teamFollow.toggleFollow.useMutation({
+      onMutate: async ({ status, home }) => {
+        utils.teamFollow.isFollowingTeams.setData({ matchId }, (curr) => {
+          if (!curr) return curr
+          if (home) {
+            return {
+              away: curr.away,
+              home: status,
+            }
+          } else {
+            return {
+              home: curr.home,
+              away: status,
+            }
+          }
+        })
+      },
+    })
+
+  const { data: watching, isLoading: loadingWatching } =
+    trpc.watching.isWatchingMatch.useQuery({
+      matchId,
+    })
+
+  const { mutate: watch, isLoading: pendingWatch } =
+    trpc.watching.toggleWatchMatch.useMutation({
+      onMutate: async ({ status }) => {
+        utils.watching.isWatchingMatch.setData({ matchId }, status)
+      },
+    })
 
   if (!match || !timeline) return <Loader />
 
@@ -50,6 +92,8 @@ export const MatchData = ({
     match.ResultType === 2 ||
     (match.HomeTeamPenaltyScore && match.HomeTeamPenaltyScore > 0) ||
     (match.AwayTeamPenaltyScore && match.AwayTeamPenaltyScore > 0)
+
+  const international = isInternational(match?.IdCompetition)
 
   return (
     <>
@@ -65,7 +109,7 @@ export const MatchData = ({
         Back
       </button>
       <div className="grid grid-cols-3 pb-8 lg:px-16">
-        <div className="flex flex-col items-center gap-1 pt-4">
+        <div className="group relative flex flex-col items-center gap-1 pt-4">
           <ClubCrest
             imgUrl={match.Home?.PictureUrl}
             alt={match.Home?.ShortClubName}
@@ -74,13 +118,35 @@ export const MatchData = ({
           />
           {match.Home ? (
             <>
-              <h2 className="hidden text-xl font-bold lg:block">
+              <h2 className=" hidden text-xl font-bold lg:block">
                 {match.Home.TeamName[0]?.Description ||
                   match.Home.ShortClubName}
               </h2>
+
               <div className="opacity-60">
                 {international ? match.Home.Abbreviation : 'Home'}
               </div>
+              {session && !loadingFollow && (
+                <button
+                  onClick={() =>
+                    match.Home &&
+                    following &&
+                    follow({
+                      teamId: match.Home.IdTeam,
+                      status: !following.home || false,
+                      home: true,
+                    })
+                  }
+                  disabled={pendingFollow}
+                  className={
+                    following?.home ? 'text-purple-500' : 'text-gray-500'
+                  }
+                >
+                  <FontAwesomeIcon
+                    icon={following?.home ? fasHeart : farHeart}
+                  />
+                </button>
+              )}
             </>
           ) : (
             <>
@@ -138,7 +204,9 @@ export const MatchData = ({
                 )
               ) : (
                 <div className="rounded-lg bg-slate-100 px-3 py-1 text-xl font-bold">
-                  Full Time
+                  {match.MatchStatus === MatchStatus.ABANDONNED
+                    ? 'Abandonned'
+                    : 'Full Time'}
                 </div>
               )}
             </>
@@ -157,8 +225,19 @@ export const MatchData = ({
               </div>
             </>
           )}
+          <div className="flex items-center justify-center">
+            {!loadingWatching && (
+              <button
+                onClick={() => watch({ matchId, status: !watching })}
+                disabled={pendingWatch}
+                className={watching ? 'text-purple-500' : 'text-gray-500'}
+              >
+                <FontAwesomeIcon icon={watching ? faBellOn : faBell} />
+              </button>
+            )}
+          </div>
         </div>
-        <div className="flex flex-col items-center gap-1 pt-4">
+        <div className="group relative flex flex-col items-center gap-1 pt-4">
           <ClubCrest
             imgUrl={match.Away?.PictureUrl}
             alt={match.Away?.ShortClubName}
@@ -174,6 +253,27 @@ export const MatchData = ({
               <div className="opacity-60">
                 {international ? match.Away.Abbreviation : 'Away'}
               </div>
+              {session && !loadingFollow && (
+                <button
+                  onClick={() =>
+                    match.Away &&
+                    following &&
+                    follow({
+                      teamId: match.Away.IdTeam,
+                      status: !following.away || false,
+                      home: false,
+                    })
+                  }
+                  disabled={pendingFollow}
+                  className={
+                    following?.away ? 'text-purple-500' : 'text-gray-500'
+                  }
+                >
+                  <FontAwesomeIcon
+                    icon={following?.away ? fasHeart : farHeart}
+                  />
+                </button>
+              )}
             </>
           ) : (
             <>

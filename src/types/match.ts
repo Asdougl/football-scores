@@ -7,12 +7,7 @@ export enum MatchStatus {
   UPCOMING = 1,
   PENALTIES = 2,
   LIVE = 3,
-  CANCELED = 4,
-  SUSPENDED = 5,
-  INTERRUPTED = 6,
-  ABANDONED = 7,
-  AWARDED = 8,
-  UNKNOWN = 9,
+  ABANDONNED = 99,
 }
 
 export const MatchTeam = z.object({
@@ -34,6 +29,8 @@ export const PotentialMatch = z.object({
   IdSeason: z.string(),
   GroupName: Localisation,
   StageName: Localisation,
+  CompetitionName: Localisation,
+  SeasonName: Localisation,
   Date: z.string(),
   LocalDate: z.string(),
   Home: MatchTeam.nullable(),

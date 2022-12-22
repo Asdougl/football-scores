@@ -8,7 +8,7 @@ export const PageTitle: FC<PropsWithChildren<{ className?: string }>> = ({
   return (
     <h1
       className={classNames(
-        'mb-6 inline-block bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-6xl font-bold text-transparent',
+        'mb-5 inline-block bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text pb-1 text-6xl font-bold text-transparent',
         className
       )}
     >

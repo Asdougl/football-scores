@@ -2,6 +2,8 @@ import {
   faFutbolBall,
   faCardsBlank,
   faCardDiamond,
+  faCheckCircle,
+  faTimesCircle,
 } from '@fortawesome/pro-duotone-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import type { CSSProperties, FC, ReactNode } from 'react'
@@ -14,7 +16,8 @@ import {
 } from '@fortawesome/pro-solid-svg-icons'
 import { faGoalNet } from '@fortawesome/pro-regular-svg-icons'
 import type { TimelineEvent } from '../types/timeline'
-import { EventType } from '../types/timeline'
+import { isPenaltyShootout, EventType } from '../types/timeline'
+
 import type { LiveMatchTeam, LiveMatchTeamPlayer } from '../types/liveMatch'
 
 const SummaryEntry: FC<{
@@ -61,6 +64,60 @@ export const Summary = ({ events, home, away }: SummaryProps) => {
     const summaryEvents: JSX.Element[] = []
     events.forEach((event) => {
       if (
+        isPenaltyShootout(event.MatchMinute) &&
+        (event.Type === EventType.CONVERTED_PENALTY ||
+          event.Type === EventType.MISSED_PENALTY ||
+          event.Type === EventType.SAVED_PENALTY)
+      ) {
+        const player = allPlayers.find(
+          (player) => player.IdPlayer === event.IdPlayer
+        )
+
+        const homeTeam = event.IdTeam === home.IdTeam
+
+        const scored = event.Type === EventType.CONVERTED_PENALTY
+
+        let label = `${
+          player?.PlayerName[0]?.Description ||
+          (homeTeam ? home.ShortClubName : away.ShortClubName)
+        }`
+        if (!scored) {
+          label += ` ${event.Type === EventType.SAVED_PENALTY ? '(S)' : '(M)'}`
+        }
+
+        const entry = (
+          <SummaryEntry
+            team={homeTeam ? 'home' : 'away'}
+            key={event.EventId}
+            items={[
+              {
+                icon: (
+                  <div className="relative">
+                    <FontAwesomeIcon icon={faGoalNet} fixedWidth />
+                    <FontAwesomeIcon
+                      icon={scored ? faCheckCircle : faTimesCircle}
+                      className={classNames(
+                        'absolute top-full left-full -translate-x-1/2 -translate-y-full transform',
+                        scored ? 'text-green-500' : 'text-red-500'
+                      )}
+                      style={
+                        {
+                          '--fa-secondary-color': 'white',
+                          '--fa-secondary-opacity': 1.0,
+                        } as CSSProperties
+                      }
+                    />
+                  </div>
+                ),
+                label: label,
+              },
+            ]}
+            time={event.MatchMinute}
+          />
+        )
+
+        summaryEvents.push(entry)
+      } else if (
         event.Type === EventType.GOAL ||
         event.Type === EventType.CONVERTED_PENALTY ||
         event.Type === EventType.OWN_GOAL
@@ -213,10 +270,7 @@ export const Summary = ({ events, home, away }: SummaryProps) => {
           />
         )
         summaryEvents.push(entry)
-      } else if (
-        event.Type === EventType.FINAL_WHISTLE ||
-        event.EventId === '2'
-      ) {
+      } else if (event.Type === EventType.FINAL_WHISTLE) {
         const entry = (
           <SummaryEntry
             team="home"
@@ -224,7 +278,7 @@ export const Summary = ({ events, home, away }: SummaryProps) => {
             items={[
               {
                 icon: <FontAwesomeIcon icon={faWhistle} fixedWidth />,
-                label: event.EventId === '2' ? 'Kickoff' : 'Final Whistle',
+                label: 'Final Whistle',
               },
             ]}
             time={event.MatchMinute}
@@ -249,6 +303,16 @@ export const Summary = ({ events, home, away }: SummaryProps) => {
   return (
     <div className="flex flex-col items-center justify-center">
       {summaryEvents}
+      <SummaryEntry
+        team="home"
+        items={[
+          {
+            icon: <FontAwesomeIcon icon={faWhistle} fixedWidth />,
+            label: 'Kickoff',
+          },
+        ]}
+        time="0'"
+      />
     </div>
   )
 }

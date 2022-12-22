@@ -1,19 +1,18 @@
-import { faArrowLeft, faArrowRight } from '@fortawesome/pro-regular-svg-icons'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import dayjs from 'dayjs'
-import isString from 'lodash/isString'
-import type { NextPage } from 'next'
-import Head from 'next/head'
 import { useRouter } from 'next/router'
 import type { FC } from 'react'
+import isString from 'lodash/isString'
+import dayjs from 'dayjs'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faArrowLeft, faArrowRight } from '@fortawesome/pro-solid-svg-icons'
+import { trpc } from '../../utils/trpc'
+import type { CompetitionId } from '../../utils/leagues'
 import { Loader } from '../../components/Loader'
 import { MatchCard } from '../../components/MatchCard'
-import { PageContainer, PageLayout } from '../../layout/PageLayout'
-import { PageTitle } from '../../layout/PageTitle'
-import { getLeagueData, League } from '../../utils/leagues'
-import { trpc } from '../../utils/trpc'
 
-const MatchesView: FC<{ league: League }> = ({ league }) => {
+export const WeekMatches: FC<{
+  competitionIds: CompetitionId[]
+  leagueSlug?: string
+}> = ({ competitionIds, leagueSlug }) => {
   const router = useRouter()
 
   const matchWeek =
@@ -23,7 +22,7 @@ const MatchesView: FC<{ league: League }> = ({ league }) => {
 
   const { data: matches, isLoading: matchesLoading } =
     trpc.matches.allMatches.useQuery({
-      league,
+      competitionIds: competitionIds,
       from: matchWeek.toDate(),
       to: matchWeek.endOf('week').add(1, 'day').toDate(),
     })
@@ -31,7 +30,10 @@ const MatchesView: FC<{ league: League }> = ({ league }) => {
   const nextWeek = () => {
     router.push({
       pathname: router.pathname,
-      query: { league, date: matchWeek.add(1, 'week').format('YYYY-MM-DD') },
+      query: {
+        league: leagueSlug,
+        date: matchWeek.add(1, 'week').format('YYYY-MM-DD'),
+      },
     })
   }
 
@@ -39,7 +41,7 @@ const MatchesView: FC<{ league: League }> = ({ league }) => {
     router.push({
       pathname: router.pathname,
       query: {
-        league,
+        league: leagueSlug,
         date: matchWeek.subtract(1, 'week').format('YYYY-MM-DD'),
       },
     })
@@ -76,9 +78,7 @@ const MatchesView: FC<{ league: League }> = ({ league }) => {
       {matchesLoading ? (
         <Loader />
       ) : matches && matches.length ? (
-        matches.map((match) => (
-          <MatchCard key={match.IdMatch} league={league} match={match} />
-        ))
+        matches.map((match) => <MatchCard key={match.IdMatch} match={match} />)
       ) : (
         <div className="py-6 text-center text-xl text-gray-500">
           No matches to show
@@ -87,32 +87,3 @@ const MatchesView: FC<{ league: League }> = ({ league }) => {
     </div>
   )
 }
-
-const MatchesPage: NextPage = () => {
-  const router = useRouter()
-
-  const parse = League.safeParse(router.query.league)
-
-  const view = parse.success ? (
-    <MatchesView league={parse.data} />
-  ) : (
-    <div>Not found</div>
-  )
-
-  const name = parse.success ? getLeagueData(parse.data).name : 'Not found'
-
-  return (
-    <PageLayout league={parse.success ? parse.data : undefined}>
-      <Head>
-        <title>{`${name} | Football`}</title>
-        <link rel="icon" href="/favicon.svg" />
-      </Head>
-      <PageContainer>
-        <PageTitle>Matches</PageTitle>
-        {view}
-      </PageContainer>
-    </PageLayout>
-  )
-}
-
-export default MatchesPage

@@ -43,7 +43,7 @@ export const WorldCup2022Knockout = () => {
   if (loading) return <Loader />
 
   return (
-    <div className="overflow-x-auto px-4 pt-8 pb-12 lg:px-0">
+    <div className="overflow-x-auto px-4 pt-12 pb-12 lg:px-0 lg:pt-8">
       <div className="flex gap-16">
         <div className="flex flex-grow flex-col justify-center pt-10">
           <div className="relative flex flex-col gap-4">
