@@ -6,17 +6,17 @@ import { Loader } from '../components/Loader'
 import { MatchCard } from '../components/MatchCard'
 import { PageTitle } from '../layout/PageTitle'
 import type { Match } from '../types/match'
-import type { League } from '../utils/leagues'
+import type { CompetitionId } from '../utils/leagues'
 import { trpc } from '../utils/trpc'
 
 interface LeagueDataProps {
-  league: League
+  competition: CompetitionId
 }
 
-export const LeagueData = ({ league }: LeagueDataProps) => {
+export const LeagueData = ({ competition }: LeagueDataProps) => {
   const { data: matches, isLoading: matchesLoading } =
     trpc.matches.allMatches.useQuery({
-      leagues: [league],
+      competitionIds: [competition],
       from: dayjs().startOf('day').toDate(),
       to: dayjs().add(1, 'week').startOf('day').toDate(),
     })
@@ -54,11 +54,7 @@ export const LeagueData = ({ league }: LeagueDataProps) => {
             <div className="flex snap-x gap-4 overflow-x-auto px-4 py-6">
               {today.length ? (
                 today.map((match) => (
-                  <HeroMatchCard
-                    key={match.IdMatch}
-                    league={league}
-                    match={match}
-                  />
+                  <HeroMatchCard key={match.IdMatch} match={match} />
                 ))
               ) : (
                 <div className="w-full text-center text-gray-500 lg:text-left">
@@ -72,17 +68,13 @@ export const LeagueData = ({ league }: LeagueDataProps) => {
             <div className="flex flex-col gap-4 py-6">
               {upcoming && upcoming.length ? (
                 upcoming.map((match) => (
-                  <MatchCard
-                    key={match.IdMatch}
-                    league={league}
-                    match={match}
-                  />
+                  <MatchCard key={match.IdMatch} match={match} />
                 ))
               ) : (
                 <div className="w-full text-center text-gray-500 lg:text-left">
                   No matches coming up,{' '}
                   <Link
-                    href={`${league}/matches?date=${dayjs()
+                    href={`/matches?date=${dayjs()
                       .startOf('week')
                       .add(8, 'days')
                       .format('YYYY-MM-DD')}`}
